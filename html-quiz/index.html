@@ -3,10 +3,10 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <title>HTML-Quiz</title>
-        <link rel="stylesheet" href="https://uri-csc-106.github.io/scorm-cs-quizzes/build/css/live-editor.core_deps.css"/>
-        <link rel="stylesheet" href="https://uri-csc-106.github.io/scorm-cs-quizzes/build/css/live-editor.audio.css"/>
-        <link rel="stylesheet" href="https://uri-csc-106.github.io/scorm-cs-quizzes/build/css/live-editor.tooltips.css"/>
-        <link rel="stylesheet" href="https://uri-csc-106.github.io/scorm-cs-quizzes/build/css/live-editor.ui.css"/>
+        <link rel="stylesheet" href="https://csc-106.appspot.com/scorm/build/css/live-editor.core_deps.css"/>
+        <link rel="stylesheet" href="https://csc-106.appspot.com/scorm/build/css/live-editor.audio.css"/>
+        <link rel="stylesheet" href="https://csc-106.appspot.com/scorm/build/css/live-editor.tooltips.css"/>
+        <link rel="stylesheet" href="https://csc-106.appspot.com/scorm/build/css/live-editor.ui.css"/>
         
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 
@@ -29,36 +29,60 @@
     </head>
     <body>
         <div id="directions"></div>
-        <div id="status"></div>
+
+        <div id="error"></div>
+        <div id="alert"></div>
+
+
+        <div class="status"></div>
 
 
         <div id="sample-live-editor"></div>
 
 
-            <div style="position: fixed; z-index: 1000; bottom: 0; left: 0; width: 100vw; padding: 10px; height: 70px; background-color: #eee;">
+            <div style="position: fixed; z-index: 1000; bottom: 0; left: 0; width: 100vw; padding: 10px; height: 80px; background-color: #eee;">
                 <div class="grid">
                     <div>
-                        <button onclick="checkMyAnswer()" class="btn btn-lg btn-success" id="test">Test my code!</button>        
+                        <button onclick="checkMyAnswer()" class="btn btn-lg btn-success" id="submit">Test my code!</button>        
                     </div>
                     <div>
-                        <p>When you're done with your work, click here to check it.</p>
+                        <div class="status"><p>&lt;-- When you're done with your work, click here to check it.</p></div>
+                        
                     </div>
                 </div>
             </div>
 
-        <script src="https://uri-csc-106.github.io/scorm-cs-quizzes/build/js/live-editor.core_deps.js"></script>
-        <script src="https://uri-csc-106.github.io/scorm-cs-quizzes/build/js/live-editor.editor_ace_deps.js"></script>
-        <script src="https://uri-csc-106.github.io/scorm-cs-quizzes/build/js/live-editor.audio.js"></script>
-        <script src="https://uri-csc-106.github.io/scorm-cs-quizzes/build/js/live-editor.shared.js"></script>
-        <script src="https://uri-csc-106.github.io/scorm-cs-quizzes/build/js/live-editor.tooltips.js"></script>
-        <script src="https://uri-csc-106.github.io/scorm-cs-quizzes/build/js/live-editor.ui.js"></script>
-        <script src="https://uri-csc-106.github.io/scorm-cs-quizzes/build/js/live-editor.editor_ace.js"></script>
+        <script src="https://csc-106.appspot.com/scorm/build/js/live-editor.core_deps.js"></script>
+        <script src="https://csc-106.appspot.com/scorm/build/js/live-editor.editor_ace_deps.js"></script>
+        <script src="https://csc-106.appspot.com/scorm/build/js/live-editor.audio.js"></script>
+        <script src="https://csc-106.appspot.com/scorm/build/js/live-editor.shared.js"></script>
+        <script src="https://csc-106.appspot.com/scorm/build/js/live-editor.tooltips.js"></script>
+        <script src="https://csc-106.appspot.com/scorm/build/js/live-editor.ui.js"></script>
+        <script src="https://csc-106.appspot.com/scorm/build/js/live-editor.editor_ace.js"></script>
     
         <script>
 
-    let startingCode, payload;
+    let startingCode, settings, payload;
 
     const setGrade = (result) => {
+
+        $("#restart-code").click();
+        
+        $("#submit").removeClass('btn-success');
+        $("#submit").addClass('disabled');
+        $("#submit").addClass('btn-danger');
+
+
+        $("#submit").text("Running");
+
+        setTimeout(() => {
+            $("#submit").text("Test my code!");
+            $("#submit").removeClass('disabled');
+            $("#submit").removeClass('btn-danger');
+            $("#submit").addClass('btn-success');
+
+
+        }, 500)
 
         switch(true){
             case (result.grade / result.max_score) * 100 < 50:
@@ -71,28 +95,44 @@
             color = '#FFDC00'
         }
 
-        $("#status").html(`
+        $(".status").html(`
             <div class="grid">
-                <div style="margin: 20px; font-size: 15pt; padding: 15px; color: black; background-color: ${color}; border-radius: 50px;">` + result.grade + `/${result.max_score || '5'}</div>
+                <div style="magin: 5px; font-size: 15pt; padding: 15px; color: black; background-color: ${color}; border-radius: 50px;">` + result.grade + `/${result.max_score || '5'}</div>
                 <div>` + result.comment + `</div>
             </div>
         
         `)
 
         setValue("cmi.core.score.max", result.max_score);
-        setValue("cmi.core.score.raw", result.grade);
+        setValue("cmi.core.score.raw", (result.grade / result.max_score) * 100);
+        setValue("cmi.core.lesson_status", "passed")
+
+        commitGrade()
+
 
     }
 
     $(document).ready(() => {
-        const mode = getValue("cmi.core.lesson_mode");
 
-        if(mode && mode.indexOf('review') > -1){
-            alert("Review mode is not supported for this quiz.")
-            document.write("Review Mode is not allowed. Please return using 'retake content'. ")
-        }
+        setTimeout(() => {
+            const mode = getValue("cmi.core.lesson_mode");
+            if(mode && mode.indexOf('review') > -1){
+                alert("Review mode is not supported for this quiz.")
+                document.write("Review Mode is not allowed. Please return using 'retake content'. ")
+            }
+        }, 2000);
 
         var converter = new showdown.Converter();
+
+        jQuery.ajax({
+            url: './config/access.json',
+            dataType: 'json',
+            success: function(data) {
+                console.log(data)
+
+                settings = data;
+            },
+        });
 
         jQuery.ajax({
             url: './config/directions.md',
@@ -121,28 +161,25 @@
             async: false
         });
 
-        window.liveEditor = new LiveEditor({
-            editorType: "ace_webpage",
-            outputType: "webpage",
-            el: $("#sample-live-editor"),
-            code: window.localStorage["webpage-code"] || startingCode,
-            width: 400,
-            height: 400,
-            editorHeight: "60%",
-            autoFocus: true,
-            workersDir: "https://uri-csc-106.github.io/scorm-cs-quizzes/build/workers/",
-            externalsDir: "https://uri-csc-106.github.io/scorm-cs-quizzes/build/external/",
-            imagesDir: "https://uri-csc-106.github.io/scorm-cs-quizzes/build/images/",
-            execFile: "output_webpage.html",
-        });
-        liveEditor.editor.on("change", function() {
-            window.localStorage["webpage-code"] = liveEditor.editor.text();
-            $("#restart-code").click();
-
-        });
-        setInterval(() => {
-            $("#restart-code").click();
-        }, 1000)
+        setTimeout(() => {
+            window.liveEditor = new LiveEditor({
+                editorType: "ace_webpage",
+                outputType: "webpage",
+                el: $("#sample-live-editor"),
+                code: window.localStorage["webpage-code" + settings.name] || startingCode,
+                width: 400,
+                height: 400,
+                editorHeight: "60%",
+                autoFocus: true,
+                workersDir: "https://csc-106.appspot.com/scorm/build/workers/",
+                externalsDir: "https://csc-106.appspot.com/scorm/build/external/",
+                imagesDir: "https://csc-106.appspot.com/scorm/build/images/",
+                execFile: "output_webpage.html",
+            });
+            liveEditor.editor.on("change", function() {
+                window.localStorage["webpage-code" + settings.name] = liveEditor.editor.text();
+            });
+        }, 2000)
 
     });
 

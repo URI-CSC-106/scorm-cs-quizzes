@@ -11,7 +11,7 @@ if(listItemCount >= 3){
     setGrade({
         grade: 100,
         max_score: 100,
-        comment: "Nice job!"
+        comment: "Nice job! Your Grade has been updated in the Brightspace gradebook. "
     })
 
 }else{
