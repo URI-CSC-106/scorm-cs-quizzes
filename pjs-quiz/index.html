@@ -462,7 +462,7 @@
                     }
 
                     setValue("cmi.core.score.raw", (result.grade / result.max_score) * 100);
-                    setValue("cmi.core.lesson_status", completed)
+                    // setValue("cmi.core.lesson_status", completed)
                     setValue("cmi.suspend_data", JSON.stringify({
                         code: window.localStorage[activity.name + "-code"], 
                         attempts: attemptUsed,

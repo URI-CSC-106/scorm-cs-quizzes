@@ -105,7 +105,9 @@
 
         setValue("cmi.core.score.max", result.max_score);
         setValue("cmi.core.score.raw", (result.grade / result.max_score) * 100);
-        setValue("cmi.core.lesson_status", "passed")
+        
+        // Disable since review mode will always been active when this is set as per SCORM 2004
+        // setValue("cmi.core.lesson_status", "passed")
 
         commitGrade()
 
